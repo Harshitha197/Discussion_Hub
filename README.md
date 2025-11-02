@@ -2,34 +2,34 @@
 
 A modern, real-time discussion platform built with Django, featuring WebSocket-powered notifications, nested comment threading, and a comprehensive RESTful API.
 
-## 🎯 Overview
+## Overview
 
 Discussion Hub is a full-stack web application that enables users to create discussion posts, engage in nested comment threads, and receive real-time notifications. Built with scalability and performance in mind, it leverages WebSocket technology for instant upda
 
-## ✨ Features
+## Features
 
 ### Core Functionality
-- 📝 **Create & Manage Discussions** - Users can start new discussion topics
-- 💬 **Nested Comment Threading** - Unlimited depth reply system with visual hierarchy
-- 👍 **Voting System** - Upvote/downvote comments with live score updates
-- ⏱️ **Time-Limited Editing** - Edit or delete your own comments within a time window
-- 🔐 **User Authentication** - Secure session-based authentication system
+- **Create & Manage Discussions** - Users can start new discussion topics
+- **Nested Comment Threading** - Unlimited depth reply system with visual hierarchy
+- **Voting System** - Upvote/downvote comments with live score updates
+- **Time-Limited Editing** - Edit or delete your own comments within a time window
+- **User Authentication** - Secure session-based authentication system
 
 ### Real-Time Features
-- 🔔 **WebSocket Notifications** - Instant alerts for new comments and replies
-- ⚡ **Live Vote Updates** - Real-time vote count synchronization
-- 👀 **Typing Indicators** - See when other users are composing replies
+- **WebSocket Notifications** - Instant alerts for new comments and replies
+- **Live Vote Updates** - Real-time vote count synchronization
+- **Typing Indicators** - See when other users are composing replies
 
 ### Performance & Scalability
-- 🚀 **Redis Caching** - Optimized data retrieval for frequently accessed content
-- 📊 **Database Indexing** - Efficient query performance for large datasets
-- 📄 **Pagination** - Smooth browsing experience with paginated comment threads
-- 🔍 **Query Optimization** - Minimized N+1 queries using select_related/prefetch_related
+- **Redis Caching** - Optimized data retrieval for frequently accessed content
+- **Database Indexing** - Efficient query performance for large datasets
+- **Pagination** - Smooth browsing experience with paginated comment threads
+- **Query Optimization** - Minimized N+1 queries using select_related/prefetch_related
 
 ### API
-- 🌐 **RESTful API** - Complete API for mobile/web integration
-- 📱 **Mobile-Ready** - Responsive design optimized for all devices
-- 🔒 **Role-Based Permissions** - Granular access control for users
+- **RESTful API** - Complete API for mobile/web integration
+- **Mobile-Ready** - Responsive design optimized for all devices
+- **Role-Based Permissions** - Granular access control for users
 
 ## 🛠️ Tech Stack
 
@@ -52,7 +52,7 @@ Discussion Hub is a full-stack web application that enables users to create disc
 - **Version Control:** Git
 - **Deployment:** Docker-ready (optional)
 
-## 🏗️ Architecture
+## Architecture
 ```
 ┌─────────────┐      WebSocket       ┌──────────────┐
 │   Browser   │◄────────────────────►│    Daphne    │
@@ -74,7 +74,7 @@ Discussion Hub is a full-stack web application that enables users to create disc
                     └──────────┘      └─────────┘      └─────────┘
 ```
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 - Python 3.8 or higher
@@ -297,25 +297,7 @@ Content-Type: application/json
 }
 ```
 
-## 📸 Screenshots
-
-### Homepage
-![Homepage](screenshots/homepage.png)
-*Beautiful gradient banner with featured discussions*
-
-### Discussion Page
-![Discussion Page](screenshots/discussion.png)
-*Nested comment threads with voting and real-time notifications*
-
-### Real-Time Notifications
-![Notifications](screenshots/notification.png)
-*Instant WebSocket-powered notifications*
-
-### API Interface
-![API](screenshots/api.png)
-*RESTful API with browsable interface*
-
-## 📁 Project Structure
+## Project Structure
 ```
 Discussion_Hub/
 ├── comment_system/           # Django project settings
@@ -359,7 +341,7 @@ Discussion_Hub/
 └── README.md               # This file
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables (Optional)
 Create a `.env` file in the project root:
