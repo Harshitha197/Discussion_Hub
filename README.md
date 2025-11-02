@@ -1,5 +1,4 @@
 # Discussion_Hub
-# 💬 Discussion Hub
 
 A modern, real-time discussion platform built with Django, featuring WebSocket-powered notifications, nested comment threading, and a comprehensive RESTful API.
 
