@@ -1,0 +1,84 @@
+<!-- comment_display.html -->
+<div class="comment{% if comment.is_deleted %} deleted{% endif %}" data-comment-id="{{ comment.id }}">
+    <div class="comment-content">
+        <!-- Comment header -->
+        <div class="comment-header d-flex justify-content-between">
+            <div class="comment-author">
+                <i class="fas fa-user-circle"></i>
+                <strong>{{ comment.author.username }}</strong>
+            </div>
+            <div class="comment-meta text-muted small">
+                <i class="fas fa-clock"></i>
+                {{ comment.created_at|date:"M d, Y \a\t g:i A" }}
+                {% if comment.updated_at != comment.created_at %}
+                    <span class="ms-2">
+                        <i class="fas fa-edit"></i>
+                        Edited: {{ comment.updated_at|date:"M d, Y \a\t g:i A" }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Comment body -->
+        <div class="comment-text mt-2">
+            {% if comment.is_deleted %}
+                <em>[This comment was deleted]</em>
+            {% else %}
+                {{ comment.content|linebreaks }}
+            {% endif %}
+        </div>
+
+        <!-- Actions -->
+        {% if not comment.is_deleted %}
+        <div class="comment-actions d-flex align-items-center gap-3 mt-2">
+            {% if user.is_authenticated %}
+                <!-- Voting -->
+                <form method="post" action="{% url 'comments:vote_comment' comment.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="vote_type" value="up">
+                    <button type="submit" class="btn btn-sm btn-outline-success">⬆️</button>
+                </form>
+
+                <span class="text-muted">{{ comment.upvote_count }} / {{ comment.downvote_count }}</span>
+
+                <form method="post" action="{% url 'comments:vote_comment' comment.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="vote_type" value="down">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">⬇️</button>
+                </form>
+
+                <!-- Reply -->
+                <button class="reply-btn btn btn-sm btn-link" data-comment-id="{{ comment.id }}">
+                    <i class="fas fa-reply"></i> Reply
+                </button>
+
+                <!-- Edit/Delete (Author only) -->
+                {% if user == comment.author %}
+                    <a href="{% url 'comments:edit_comment' comment.id %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{% url 'comments:delete_comment' comment.id %}" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-trash"></i> Delete
+                    </a>
+                {% endif %}
+            {% else %}
+                <span class="text-muted">
+                    ⬆️ {{ comment.upvote_count }} / ⬇️ {{ comment.downvote_count }}
+                </span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Reply form will be dynamically injected here -->
+    <div class="reply-form-container" id="reply-form-{{ comment.id }}"></div>
+
+    <!-- Nested replies -->
+    {% if comment.get_replies %}
+        <div class="comment-replies ms-4 mt-3">
+            {% for reply in comment.get_replies %}
+                {% include 'comments/comment_display.html' with comment=reply %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

@@ -1,0 +1,92 @@
+[
+    {
+      "model": "comments.page",
+      "pk": 1,
+      "fields": {
+        "title": "Welcome to the Blog",
+        "content": "This is the very first post on the blog. Feel free to comment below!",
+        "slug": "welcome-to-the-blog"
+      }
+    },
+    {
+      "model": "comments.page",
+      "pk": 2,
+      "fields": {
+        "title": "Learning Django",
+        "content": "Django makes it easier to build web apps quickly. Share your thoughts!",
+        "slug": "learning-django"
+      }
+    },
+    {
+      "model": "comments.page",
+      "pk": 3,
+      "fields": {
+        "title": "Understanding Comment Systems",
+        "content": "Let's discuss how comment systems work under the hood.",
+        "slug": "understanding-comment-systems"
+      }
+    },
+    {
+      "model": "comments.page",
+      "pk": 4,
+      "fields": {
+        "title": "Handling Nested Replies",
+        "content": "How should nested replies be handled in a scalable way?",
+        "slug": "handling-nested-replies"
+      }
+    },
+    {
+      "model": "comments.page",
+      "pk": 5,
+      "fields": {
+        "title": "Becoming a Moderator",
+        "content": "What qualities should a good moderator have?",
+        "slug": "becoming-a-moderator"
+      }
+    },
+    {
+      "model": "comments.page",
+      "pk": 6,
+      "fields": {
+        "title": "Report Abuse in Communities",
+        "content": "Discussing how online platforms should handle reported content.",
+        "slug": "report-abuse-in-communities"
+      }
+    },
+    {
+      "model": "comments.page",
+      "pk": 7,
+      "fields": {
+        "title": "Voting Systems",
+        "content": "What is a fair way to implement upvotes and downvotes?",
+        "slug": "voting-systems"
+      }
+    },
+    {
+      "model": "comments.page",
+      "pk": 8,
+      "fields": {
+        "title": "Dealing with Spam",
+        "content": "Techniques to prevent and handle spam in comment sections.",
+        "slug": "dealing-with-spam"
+      }
+    },
+    {
+      "model": "comments.page",
+      "pk": 9,
+      "fields": {
+        "title": "Best Practices for Comments",
+        "content": "Share your best practices for designing a comment section.",
+        "slug": "best-practices-for-comments"
+      }
+    },
+    {
+      "model": "comments.page",
+      "pk": 10,
+      "fields": {
+        "title": "Open Discussion",
+        "content": "A free discussion thread for everyone!",
+        "slug": "open-discussion"
+      }
+    }
+  ]

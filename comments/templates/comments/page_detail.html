@@ -1,0 +1,386 @@
+<!-- ...existing code... -->
+{% extends 'comments/base.html' %}
+
+{% block title %}{{ page.title }} - Comment System{% endblock %}
+
+{% block content %}
+<div class="page-detail">
+    <article class="post">
+        <header class="post-header">
+            <h2>{{ page.title }}</h2>
+            <div class="post-meta">
+                <i class="fas fa-calendar"></i>
+                <span>{{ page.created_at|date:"F d, Y" }}</span>
+                {% if page.updated_at != page.created_at %}
+                    <span class="updated">
+                        <i class="fas fa-edit"></i>
+                        Updated: {{ page.updated_at|date:"F d, Y" }}
+                    </span>
+                {% endif %}
+            </div>
+        </header>
+
+        <div class="post-content">
+            {{ page.content|linebreaks }}
+        </div>
+    </article>
+
+    <nav class="post-navigation">
+        <a href="{% url 'comments:homepage' %}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Discussions
+        </a>
+    </nav>
+
+    <!-- Comments section -->
+    <section class="comments-section">
+        <div class="comments-header">
+            <h3>
+                <i class="fas fa-comments"></i> Comments
+                <span class="comment-count">({{ page_obj.paginator.count }})</span>
+            </h3>
+        </div>
+
+        <!-- Top-level comment form -->
+        <div class="comment-form-wrapper" id="main-comment-form">
+            {% if user.is_authenticated %}
+                <form method="post" class="comment-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="{{ comment_form.content.id_for_label }}">
+                            <i class="fas fa-comment"></i> Add a comment:
+                        </label>
+                        {{ comment_form.content }}
+                    </div>
+                    <input type="hidden" name="parent_id" value="">
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Post Comment
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="login-prompt">
+                    <p>Please <a href="{% url 'login' %}?next={{ request.path }}">login</a> to leave a comment.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Reusable dynamic reply form (hidden by default) -->
+        {% if user.is_authenticated %}
+            <form id="reply-form" method="post" style="display: none;">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_content_reply">
+                        <i class="fas fa-reply"></i> Your reply:
+                    </label>
+                    <textarea name="content" id="id_content_reply" rows="4" 
+                              placeholder="Write your reply..." 
+                              class="form-control" required></textarea>
+                </div>
+                <input type="hidden" name="parent_id" id="id_parent_id">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Post Reply
+                </button>
+                <button type="button" class="btn btn-secondary" id="cancel-reply">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </form>
+        {% endif %}
+
+        <!-- Comments display -->
+        <div class="comments-container">
+            {% if page_obj %}
+                {% for comment in page_obj %}
+                    {% include 'comments/comment_display.html' with comment=comment %}
+                {% endfor %}
+            {% else %}
+                <div class="no-comments">
+                    <i class="fas fa-comment-slash"></i>
+                    <p>No comments yet. Be the first to share your thoughts!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination" style="margin: 20px 0; text-align: center;">
+            {% if page_obj.has_previous %}
+                <a href="?page=1" class="btn btn-sm">First</a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm">Previous</a>
+            {% endif %}
+
+            <span style="margin: 0 15px;">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-sm">Last</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </section>
+</div>
+
+<!-- JavaScript for reply functionality and WebSocket -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const replyForm = document.getElementById("reply-form");
+    const cancelReplyButton = document.getElementById("cancel-reply");
+    const mainFormWrapper = document.getElementById("main-comment-form");
+
+    // Reply button functionality
+    if (replyForm) {
+        document.querySelectorAll(".reply-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                const commentId = this.dataset.commentId;
+                const replyContainer = document.getElementById("reply-form-" + commentId);
+
+                if (replyContainer && replyForm) {
+                    replyContainer.appendChild(replyForm);
+                    replyForm.style.display = "block";
+                    document.getElementById("id_parent_id").value = commentId;
+                    document.getElementById("id_content_reply").focus();
+                }
+
+                document.querySelectorAll(".reply-btn").forEach(btn => {
+                    btn.innerHTML = '<i class="fas fa-reply"></i> Reply';
+                    btn.classList.remove("active");
+                });
+                this.innerHTML = '<i class="fas fa-reply"></i> Replying...';
+                this.classList.add("active");
+            });
+        });
+
+        cancelReplyButton.addEventListener("click", function () {
+            mainFormWrapper.appendChild(replyForm);
+            replyForm.style.display = "none";
+            document.getElementById("id_parent_id").value = "";
+            document.getElementById("id_content_reply").value = "";
+
+            document.querySelectorAll(".reply-btn").forEach(btn => {
+                btn.innerHTML = '<i class="fas fa-reply"></i> Reply';
+                btn.classList.remove("active");
+            });
+        });
+    }
+
+    // WebSocket connection for real-time updates
+    const pageId = {{ page.id }};
+    let commentSocket;
+    
+    try {
+        commentSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/comments/' + pageId + '/'
+        );
+
+        commentSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            
+            if (data.type === 'new_comment') {
+                showNotification('New comment by ' + data.comment.author);
+                // Reload to show new comment
+                if (data.comment.parent_id === null) {
+                    setTimeout(() => location.reload(), 1000);
+                    
+                }
+            } else if (data.type === 'vote_update') {
+                updateVoteCount(data.comment_id, data.net_votes);
+            } else if (data.type === 'typing') {
+                if (data.is_typing) {
+                    showTypingIndicator(data.username);
+                } else {
+                    hideTypingIndicator();
+                }
+            }
+        };
+
+        commentSocket.onclose = function(e) {
+            console.log('Comment socket closed');
+        };
+
+        commentSocket.onerror = function(e) {
+            console.error('WebSocket error:', e);
+        };
+    } catch (error) {
+        console.log('WebSocket not available:', error);
+    }
+
+    // Notification socket for logged-in users
+    {% if user.is_authenticated %}
+    let notificationSocket;
+    let notificationCount = 0;
+
+    try {
+        notificationSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/notifications/'
+        );
+
+        notificationSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            
+            if (data.type === 'notification') {
+                notificationCount++;
+                showNotification(data.message);
+                updateNotificationBadge(notificationCount);
+            }
+        };
+
+        notificationSocket.onclose = function(e) {
+            console.log('Notification socket closed');
+        };
+    } catch (error) {
+        console.log('Notification WebSocket not available:', error);
+    }
+    {% endif %}
+
+    // Typing indicator
+    const commentTextarea = document.getElementById("id_content_reply");
+    let typingTimer;
+    const typingDelay = 1000;
+
+    if (commentTextarea && commentSocket && commentSocket.readyState === WebSocket.OPEN) {
+        commentTextarea.addEventListener('input', function() {
+            clearTimeout(typingTimer);
+            
+            commentSocket.send(JSON.stringify({
+                'type': 'typing',
+                'username': '{{ user.username }}',
+                'is_typing': true
+            }));
+
+            typingTimer = setTimeout(function() {
+                commentSocket.send(JSON.stringify({
+                    'type': 'typing',
+                    'username': '{{ user.username }}',
+                    'is_typing': false
+                }));
+            }, typingDelay);
+        });
+    }
+
+    // Helper functions
+    function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification-popup';
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    function updateVoteCount(commentId, netVotes) {
+        const scoreElement = document.querySelector(`[data-comment-id="${commentId}"] .vote-score`);
+        if (scoreElement) {
+            scoreElement.textContent = netVotes;
+            scoreElement.style.animation = 'flash 0.5s';
+            setTimeout(() => {
+                scoreElement.style.animation = '';
+            }, 500);
+        }
+    }
+
+    function showTypingIndicator(username) {
+        let indicator = document.getElementById('typing-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'typing-indicator';
+            indicator.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                background: #f0f0f0;
+                padding: 10px 15px;
+                border-radius: 20px;
+                font-size: 14px;
+                color: #666;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            `;
+            document.body.appendChild(indicator);
+        }
+        indicator.textContent = `${username} is typing...`;
+        indicator.style.display = 'block';
+    }
+
+    function hideTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) {
+            indicator.style.display = 'none';
+        }
+    }
+
+    function updateNotificationBadge(count) {
+        let badge = document.getElementById('notification-badge');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.id = 'notification-badge';
+            badge.style.cssText = `
+                position: absolute;
+                top: -8px;
+                right: -8px;
+                background: red;
+                color: white;
+                border-radius: 50%;
+                padding: 4px 8px;
+                font-size: 12px;
+                font-weight: bold;
+                min-width: 20px;
+                text-align: center;
+            `;
+            const userMenu = document.querySelector('.user-menu');
+            if (userMenu) {
+                userMenu.style.position = 'relative';
+                userMenu.appendChild(badge);
+            }
+        }
+        badge.textContent = count;
+    }
+});
+</script>
+
+<style>
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    @keyframes flash {
+        0%, 100% { background-color: transparent; }
+        50% { background-color: #ffeb3b; }
+    }
+</style>
+{% endblock %}
+<!-- ...existing code... -->
